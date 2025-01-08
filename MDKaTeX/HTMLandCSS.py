@@ -43,7 +43,8 @@ HTMLforEditor = """
 					getScript("_katex.min.js", "https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.js"),
 					getScript("_auto-render.js", "https://cdn.jsdelivr.net/gh/Jwrede/Anki-KaTeX-Markdown/auto-render-cdn.js"),
 					getScript("_markdown-it.min.js", "https://cdnjs.cloudflare.com/ajax/libs/markdown-it/12.0.4/markdown-it.min.js"),
-                                        getScript("_markdown-it-mark.js","https://cdn.jsdelivr.net/gh/Jwrede/Anki-KaTeX-Markdown/_markdown-it-mark.js")
+					getScript("_markdown-it-mark.js","https://cdn.jsdelivr.net/gh/Jwrede/Anki-KaTeX-Markdown/_markdown-it-mark.js"),
+        			getScript("_plantuml-encoder.min.js","https://cdn.jsdelivr.net/npm/plantuml-encoder@1.4.0/dist/plantuml-encoder.min.js")
 					
 				];
 
@@ -94,6 +95,7 @@ HTMLforEditor = """
 				function render(text) {
 					renderMath(text);
 					markdown(text);
+                    renderPlantUML(text);
 					show();
 				}
 
@@ -127,6 +129,28 @@ HTMLforEditor = """
 					text = md.render(text);
 					area.innerHTML = text.replace(/&lt;\/span&gt;/gi,"\\\\");
 				}
+                
+                    
+				function renderPlantUML(text) {
+
+					text = replaceHTMLElementsInUMLString(text);
+
+					let plantumlRegex = /@startuml([\s\S]*?)@enduml/g;
+					let matches = Array.from(text.matchAll(plantumlRegex));
+
+					for (let match of matches) {
+						let plantumlCode = match[0];
+						let encoded = plantumlEncoder.encode(plantumlCode);
+						let plantumlURL = `https://www.plantuml.com/plantuml/svg/${encoded}`;
+
+						let imgTag = `<img src="${plantumlURL}" alt="PlantUML Diagram" style="max-width: 100%; height: auto;" />`;
+
+						text = text.replace(plantumlCode, imgTag);
+					}
+
+					area.innerHTML = text;
+				}
+                
 				function replaceInString(str) {
 					str = str.replace(/<[\/]?pre[^>]*>/gi, "");
 					str = str.replace(/<br\s*[\/]?[^>]*>/gi, "\\n");
@@ -144,6 +168,15 @@ HTMLforEditor = """
 					str = str.replace(/&lt;/gi, "<");
 					return str.replace(/&amp;/gi, "&");
 				}
+                
+                function replaceHTMLElementsInUMLString(str) {
+					str = str.replace(/&nbsp;/gi, " ");
+					str = str.replace(/&tab;/gi, "	");
+					str = str.replace(/&gt;/gi, ">");
+					str = str.replace(/&lt;/gi, "<");
+					str = str.replace(/&amp;/gi, "&");
+					return str;
+				}
         """
 
 front = """
@@ -158,7 +191,8 @@ front = """
 		getScript("_katex.min.js", "https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.js"),
 		getScript("_auto-render.js", "https://cdn.jsdelivr.net/gh/Jwrede/Anki-KaTeX-Markdown/auto-render-cdn.js"),
 		getScript("_markdown-it.min.js", "https://cdnjs.cloudflare.com/ajax/libs/markdown-it/12.0.4/markdown-it.min.js"),
-                getScript("_markdown-it-mark.js","https://cdn.jsdelivr.net/gh/Jwrede/Anki-KaTeX-Markdown/_markdown-it-mark.js")
+		getScript("_markdown-it-mark.js","https://cdn.jsdelivr.net/gh/Jwrede/Anki-KaTeX-Markdown/_markdown-it-mark.js"),
+        getScript("_plantuml-encoder.min.js","https://cdn.jsdelivr.net/npm/plantuml-encoder@1.4.0/dist/plantuml-encoder.min.js")
 	];
         Promise.all(getResources).then(() => getScript("_mhchem.js", "https://cdn.jsdelivr.net/npm/katex@0.13.11/dist/contrib/mhchem.min.js")).then(render).catch(show);
 	
@@ -203,6 +237,7 @@ front = """
 	function render() {
 		renderMath("front");
 		markdown("front");
+        renderPlantUML("front");
 		show();
 	}
 
@@ -237,6 +272,29 @@ front = """
 		text = md.render(text);
 		document.getElementById(ID).innerHTML = text.replace(/&lt;\/span&gt;/gi,"\\\\");
 	}
+    
+	function renderPlantUML(ID) {
+		let container = document.getElementById(ID);
+		let text = container.innerHTML;
+
+		text = replaceHTMLElementsInUMLString(text);
+
+		let plantumlRegex = /@startuml([\s\S]*?)@enduml/g;
+		let matches = Array.from(text.matchAll(plantumlRegex));
+
+		for (let match of matches) {
+			let plantumlCode = match[0];
+			let encoded = plantumlEncoder.encode(plantumlCode);
+			let plantumlURL = `https://www.plantuml.com/plantuml/svg/${encoded}`;
+
+			let imgTag = `<img src="${plantumlURL}" alt="PlantUML Diagram" style="max-width: 100%; height: auto;" />`;
+
+			text = text.replace(plantumlCode, imgTag);
+		}
+
+		container.innerHTML = text;
+	}
+    
 	function replaceInString(str) {
 		str = str.replace(/<[\/]?pre[^>]*>/gi, "");
 		str = str.replace(/<br\s*[\/]?[^>]*>/gi, "\\n");
@@ -253,6 +311,15 @@ front = """
 		str = str.replace(/&gt;/gi, ">");
 		str = str.replace(/&lt;/gi, "<");
 		return str.replace(/&amp;/gi, "&");
+	}
+    
+    function replaceHTMLElementsInUMLString(str) {
+		str = str.replace(/&nbsp;/gi, " ");
+		str = str.replace(/&tab;/gi, "	");
+		str = str.replace(/&gt;/gi, ">");
+		str = str.replace(/&lt;/gi, "<");
+		str = str.replace(/&amp;/gi, "&");
+		return str;
 	}
 </script>
 """
@@ -273,7 +340,8 @@ back = """
 		getScript("_katex.min.js", "https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.js"),
 		getScript("_auto-render.js", "https://cdn.jsdelivr.net/gh/Jwrede/Anki-KaTeX-Markdown/auto-render-cdn.js"),
 		getScript("_markdown-it.min.js", "https://cdnjs.cloudflare.com/ajax/libs/markdown-it/12.0.4/markdown-it.min.js"),
-		getScript("_markdown-it-mark.js","https://cdn.jsdelivr.net/gh/Jwrede/Anki-KaTeX-Markdown/_markdown-it-mark.js")
+		getScript("_markdown-it-mark.js","https://cdn.jsdelivr.net/gh/Jwrede/Anki-KaTeX-Markdown/_markdown-it-mark.js"),
+        getScript("_plantuml-encoder.min.js","https://cdn.jsdelivr.net/npm/plantuml-encoder@1.4.0/dist/plantuml-encoder.min.js")
 	];
         Promise.all(getResources).then(() => getScript("_mhchem.js", "https://cdn.jsdelivr.net/npm/katex@0.13.11/dist/contrib/mhchem.min.js")).then(render).catch(show);
 	
@@ -317,8 +385,10 @@ back = """
 	function render() {
 		renderMath("front");
 		markdown("front");
+        renderPlantUML("front");
 		renderMath("back");
 		markdown("back");
+        renderPlantUML("back");
 		show();
 	}
 
@@ -354,6 +424,30 @@ back = """
 		text = md.render(text);
 		document.getElementById(ID).innerHTML = text.replace(/&lt;\/span&gt;/gi,"\\\\");
 	}
+    
+        
+	function renderPlantUML(ID) {
+		let container = document.getElementById(ID);
+		let text = container.innerHTML;
+
+		text = replaceHTMLElementsInUMLString(text);
+
+		let plantumlRegex = /@startuml([\s\S]*?)@enduml/g;
+		let matches = Array.from(text.matchAll(plantumlRegex));
+
+		for (let match of matches) {
+			let plantumlCode = match[0];
+			let encoded = plantumlEncoder.encode(plantumlCode);
+			let plantumlURL = `https://www.plantuml.com/plantuml/svg/${encoded}`;
+
+			let imgTag = `<img src="${plantumlURL}" alt="PlantUML Diagram" style="max-width: 100%; height: auto;" />`;
+
+			text = text.replace(plantumlCode, imgTag);
+		}
+
+		container.innerHTML = text;
+	}
+    
 	function replaceInString(str) {
 		str = str.replace(/<[\/]?pre[^>]*>/gi, "");
 		str = str.replace(/<br\s*[\/]?[^>]*>/gi, "\\n");
@@ -371,6 +465,15 @@ back = """
 		str = str.replace(/&lt;/gi, "<");
 		return str.replace(/&amp;/gi, "&");
 	}
+    
+    function replaceHTMLElementsInUMLString(str) {
+		str = str.replace(/&nbsp;/gi, " ");
+		str = str.replace(/&tab;/gi, "	");
+		str = str.replace(/&gt;/gi, ">");
+		str = str.replace(/&lt;/gi, "<");
+		str = str.replace(/&amp;/gi, "&");
+		return str;
+	}
 </script>
 """
 
@@ -386,7 +489,8 @@ front_cloze = """
 		getScript("_katex.min.js", "https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.js"),
 		getScript("_auto-render.js", "https://cdn.jsdelivr.net/gh/Jwrede/Anki-KaTeX-Markdown/auto-render-cdn.js"),
 		getScript("_markdown-it.min.js", "https://cdnjs.cloudflare.com/ajax/libs/markdown-it/12.0.4/markdown-it.min.js"),
-		getScript("_markdown-it-mark.js","https://cdn.jsdelivr.net/gh/Jwrede/Anki-KaTeX-Markdown/_markdown-it-mark.js")
+		getScript("_markdown-it-mark.js","https://cdn.jsdelivr.net/gh/Jwrede/Anki-KaTeX-Markdown/_markdown-it-mark.js"),
+        getScript("_plantuml-encoder.min.js","https://cdn.jsdelivr.net/npm/plantuml-encoder@1.4.0/dist/plantuml-encoder.min.js")
 	];
         Promise.all(getResources).then(() => getScript("_mhchem.js", "https://cdn.jsdelivr.net/npm/katex@0.13.11/dist/contrib/mhchem.min.js")).then(render).catch(show);
 	
@@ -429,6 +533,7 @@ front_cloze = """
 	function render() {
 		renderMath("front");
 		markdown("front");
+        renderPlantUML("front");
 		show();
 	}
 	function show() {
@@ -460,6 +565,30 @@ front_cloze = """
 		text = md.render(text);
 		document.getElementById(ID).innerHTML = text.replace(/&lt;\/span&gt;/gi,"\\\\");
 	}
+    
+        
+	function renderPlantUML(ID) {
+		let container = document.getElementById(ID);
+		let text = container.innerHTML;
+
+		text = replaceHTMLElementsInUMLString(text);
+
+		let plantumlRegex = /@startuml([\s\S]*?)@enduml/g;
+		let matches = Array.from(text.matchAll(plantumlRegex));
+
+		for (let match of matches) {
+			let plantumlCode = match[0];
+			let encoded = plantumlEncoder.encode(plantumlCode);
+			let plantumlURL = `https://www.plantuml.com/plantuml/svg/${encoded}`;
+
+			let imgTag = `<img src="${plantumlURL}" alt="PlantUML Diagram" style="max-width: 100%; height: auto;" />`;
+
+			text = text.replace(plantumlCode, imgTag);
+		}
+
+		container.innerHTML = text;
+	}
+    
 	function replaceInString(str) {
 		str = str.replace(/<[\/]?pre[^>]*>/gi, "");
 		str = str.replace(/<br\s*[\/]?[^>]*>/gi, "\\n");
@@ -477,6 +606,15 @@ front_cloze = """
 		str = str.replace(/&lt;/gi, "<");
 		return str.replace(/&amp;/gi, "&");
 	}
+    
+    function replaceHTMLElementsInUMLString(str) {
+		str = str.replace(/&nbsp;/gi, " ");
+		str = str.replace(/&tab;/gi, "	");
+		str = str.replace(/&gt;/gi, ">");
+		str = str.replace(/&lt;/gi, "<");
+		str = str.replace(/&amp;/gi, "&");
+		return str;
+	}
 </script>
 """
 
@@ -493,7 +631,8 @@ back_cloze = """
 		getScript("_katex.min.js", "https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.js"),
 		getScript("_auto-render.js", "https://cdn.jsdelivr.net/gh/Jwrede/Anki-KaTeX-Markdown/auto-render-cdn.js"),
 		getScript("_markdown-it.min.js", "https://cdnjs.cloudflare.com/ajax/libs/markdown-it/12.0.4/markdown-it.min.js"),
-		getScript("_markdown-it-mark.js","https://cdn.jsdelivr.net/gh/Jwrede/Anki-KaTeX-Markdown/_markdown-it-mark.js")
+		getScript("_markdown-it-mark.js","https://cdn.jsdelivr.net/gh/Jwrede/Anki-KaTeX-Markdown/_markdown-it-mark.js"),
+        getScript("_plantuml-encoder.min.js","https://cdn.jsdelivr.net/npm/plantuml-encoder@1.4.0/dist/plantuml-encoder.min.js")
 	];
         Promise.all(getResources).then(() => getScript("_mhchem.js", "https://cdn.jsdelivr.net/npm/katex@0.13.11/dist/contrib/mhchem.min.js")).then(render).catch(show);
 	
@@ -538,8 +677,10 @@ back_cloze = """
 	function render() {
 		renderMath("back");
 		markdown("back");
+        renderPlantUML("back");
 		renderMath("extra");
 		markdown("extra");	
+        renderPlantUML("extra");
 		show();
 	}
 
@@ -574,6 +715,29 @@ back_cloze = """
 		text = md.render(text);
 		document.getElementById(ID).innerHTML = text.replace(/&lt;\/span&gt;/gi,"\\\\");
 	}
+    
+	function renderPlantUML(ID) {
+		let container = document.getElementById(ID);
+		let text = container.innerHTML;
+
+		text = replaceHTMLElementsInUMLString(text);
+
+		let plantumlRegex = /@startuml([\s\S]*?)@enduml/g;
+		let matches = Array.from(text.matchAll(plantumlRegex));
+
+		for (let match of matches) {
+			let plantumlCode = match[0];
+			let encoded = plantumlEncoder.encode(plantumlCode);
+			let plantumlURL = `https://www.plantuml.com/plantuml/svg/${encoded}`;
+
+			let imgTag = `<img src="${plantumlURL}" alt="PlantUML Diagram" style="max-width: 100%; height: auto;" />`;
+
+			text = text.replace(plantumlCode, imgTag);
+		}
+
+		container.innerHTML = text;
+	}
+    
 	function replaceInString(str) {
 		str = str.replace(/<[\/]?pre[^>]*>/gi, "");
 		str = str.replace(/<br\s*[\/]?[^>]*>/gi, "\\n");
@@ -590,6 +754,15 @@ back_cloze = """
 		str = str.replace(/&gt;/gi, ">");
 		str = str.replace(/&lt;/gi, "<");
 		return str.replace(/&amp;/gi, "&");
+	}
+    
+    function replaceHTMLElementsInUMLString(str) {
+		str = str.replace(/&nbsp;/gi, " ");
+		str = str.replace(/&tab;/gi, "	");
+		str = str.replace(/&gt;/gi, ">");
+		str = str.replace(/&lt;/gi, "<");
+		str = str.replace(/&amp;/gi, "&");
+		return str;
 	}
 </script>
 

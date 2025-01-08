@@ -6,7 +6,7 @@ from aqt import mw
 from anki.hooks import addHook
 import anki
 
-MODEL_NAME = 'KaTeX and Markdown'
+MODEL_NAME = 'KaTeX PlantUML and Markdown'
 CONF_NAME = 'MDKATEX'
 
 
@@ -135,6 +135,8 @@ def update():
     _add_file(os.path.join(addon_path, "_mhchem.js"), "_mhchem.js")
     _add_file(os.path.join(addon_path, "_markdown-it-mark.js"),
               "_markdown-it-mark.js")
+    _add_file(os.path.join(addon_path, "_plantuml-encoder.min.js"),
+              "_plantuml-encoder.min.js")
 
     for katex_font in os.listdir(os.path.join(addon_path, "fonts")):
         _add_file(os.path.join(addon_path, "fonts", katex_font), katex_font)
