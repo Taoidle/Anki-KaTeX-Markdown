@@ -756,13 +756,19 @@ back_cloze = """
 		return str.replace(/&amp;/gi, "&");
 	}
     
-    function replaceHTMLElementsInUMLString(str) {
-		str = str.replace(/&nbsp;/gi, " ");
-		str = str.replace(/&tab;/gi, "	");
-		str = str.replace(/&gt;/gi, ">");
-		str = str.replace(/&lt;/gi, "<");
-		str = str.replace(/&amp;/gi, "&");
-		return str;
+	function replaceHTMLElementsInUMLString(str) {
+	    return str.replace(/@startuml([\s\S]*?)@enduml/gi, function(match, umlContent) {
+	        umlContent = umlContent.replace(/&nbsp;/gi, " ");
+	        umlContent = umlContent.replace(/&tab;/gi, "\t");
+	        umlContent = umlContent.replace(/&gt;/gi, ">");
+	        umlContent = umlContent.replace(/&lt;/gi, "<");
+	        umlContent = umlContent.replace(/&amp;/gi, "&");
+	        umlContent = umlContent.replace(/<br\s*\/?>/gi, "\n");
+	        umlContent = umlContent.replace(/<\/p>/gi, "\n\n");
+	        umlContent = umlContent.replace(/<\/div>/gi, "\n");
+	        umlContent = umlContent.replace(/<p>/gi, "");
+    	    return "@startuml" + umlContent + "@enduml";
+    	});
 	}
 </script>
 
